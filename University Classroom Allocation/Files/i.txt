@@ -1,0 +1,141 @@
+<?php include('config.php'); ?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Classroom Allocation</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Ionicons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons.js"></script>
+    <!-- Custom CSS -->
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f4f7fc;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1rem;
+            color: #7f8c8d;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+
+        .nav-item {
+            background: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            text-align: center;
+            width: 300px;
+            margin: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .nav-item:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-item ion-icon {
+            font-size: 3rem;
+            color: #3498db;
+            margin-bottom: 15px;
+        }
+
+        .nav-item h3 {
+            font-size: 1.25rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .nav-item p {
+            font-size: 0.875rem;
+            color: #7f8c8d;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 0.875rem;
+            color: #bdc3c7;
+        }
+
+        .footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>University Classroom Allocation</h1>
+            <p>Effortlessly manage classrooms, timetables, and course schedules.</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="navigation">
+            <div class="nav-item">
+                <ion-icon name="folder-open-outline"></ion-icon>
+                <h3>Data Management</h3>
+                <p>Manage your courses, classrooms, and scheduling data.</p>
+                <a href="data_management.php">Go to Data Management</a>
+            </div>
+            <div class="nav-item">
+                <ion-icon name="calendar-outline"></ion-icon>
+                <h3>Generate Timetable</h3>
+                <p>Create and optimize your university's timetable instantly.</p>
+                <a href="generate_timetable.php">Go to Timetable Generator</a>
+            </div>
+            <div class="nav-item">
+                <ion-icon name="eye-outline"></ion-icon>
+                <h3>View Timetable</h3>
+                <p>Browse and export generated timetables for students and staff.</p>
+                <a href="view_timetable.php">View Timetables</a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            &copy; 2024 University Classroom Allocation. Built with <ion-icon name="heart-outline"></ion-icon> by <a href="#">Your Team</a>.
+        </div>
+    </div>
+</body>
+
+</html>

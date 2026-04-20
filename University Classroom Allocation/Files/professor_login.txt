@@ -1,0 +1,283 @@
+<?php
+session_start();
+include('config.php');
+
+// Handle registration
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'register') {
+    $name = $con->real_escape_string($_POST['name']);
+    $username = $con->real_escape_string($_POST['reg_username']);
+    $password = $con->real_escape_string($_POST['reg_password']);
+    $building_id = (int) $_POST['building_id'];
+
+    $stmt = $con->prepare("INSERT INTO professors (name, username, password, building_id) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param("sssi", $name, $username, $password, $building_id);
+    $stmt->execute();
+    $registrationSuccess = true;
+}
+
+// Handle login
+$error = "";
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST['action'])) {
+    $role = $_POST['role'];
+    $username = $con->real_escape_string($_POST['username']);
+    $password = $_POST['password'];
+
+    if ($role === 'admin') {
+    $stmt = $con->prepare("SELECT * FROM admin WHERE username = ?");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($admin = $result->fetch_assoc()) {
+        if (password_verify($password, $admin['password'])) {
+            $_SESSION['admin_logged_in'] = true;
+            $_SESSION['username'] = $username;
+            header('Location: index.php');
+            exit;
+        } else {
+            $error = "Invalid Admin credentials.";
+        }
+    } else {
+        $error = "Invalid Admin credentials.";
+    }
+
+
+
+    } elseif ($role === 'professor') {
+        $stmt = $con->prepare("SELECT * FROM professors WHERE username=? AND password=?");
+        $stmt->bind_param("ss", $username, $password);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($prof = $result->fetch_assoc()) {
+            $_SESSION['professor_logged_in'] = true;
+            $_SESSION['professor_id'] = $prof['id'];
+            $_SESSION['professor_name'] = $prof['name'];
+            $_SESSION['department_id'] = $prof['department_id'] ?? null;
+            $_SESSION['building_id'] = $prof['building_id'] ?? null;
+            header('Location: professor_dashboard.php');
+            exit;
+        } else {
+            $error = "Invalid Professor credentials.";
+        }
+    }
+}
+
+$buildings = $con->query("SELECT * FROM buildings");
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1abc9c, #3498db);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .login-container {
+            background: #2c3e50;
+            padding: 40px 30px;
+            border-radius: 10px;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+            width: 320px;
+            text-align: center;
+        }
+
+        .login-container h2 {
+            margin-bottom: 20px;
+            color: #1abc9c;
+        }
+
+        .input-field, .login-container button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .login-container button {
+            background: #1abc9c;
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: bold;
+        }
+
+        .login-container button:hover {
+            background: #16a085;
+        }
+
+        .register-link {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .register-link a {
+            color: #ecf0f1;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .success {
+            background: #2ecc71;
+            color: #fff;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .modal {
+            background: #f7f9fa;
+            color: #2c3e50;
+            padding: 35px 25px 30px;
+            border-radius: 12px;
+            width: 340px;
+            position: relative;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+        }
+
+        .modal h3 {
+            color: #1abc9c;
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+
+        .modal .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 22px;
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+        }
+
+        .modal input, .modal select, .modal button[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        .modal button[type="submit"] {
+            background: #1abc9c;
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .modal button[type="submit"]:hover {
+            background: #16a085;
+        }
+
+        .modal .avatar {
+            width: 60px;
+            height: 60px;
+            background: #1abc9c;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-container">
+    <h2>Login Portal</h2>
+    <?php if (!empty($error)) echo "<p class='error'>$error</p>"; ?>
+    <?php if (!empty($registrationSuccess)) echo "<p class='success'>Professor registered successfully!</p>"; ?>
+    <form method="POST">
+        <select name="role" required class="input-field">
+            <option value="">Select Role</option>
+            <option value="admin">Admin</option>
+            <option value="professor">Professor</option>
+        </select>
+        <input type="text" name="username" placeholder="Username" required class="input-field" />
+        <input type="password" name="password" placeholder="Password" required class="input-field" />
+        <button type="submit">Login</button>
+    </form>
+
+    <div class="register-link">
+        Not registered? <a onclick="openModal()">Register as Professor</a>
+    </div>
+</div>
+
+<!-- Modal Registration Form -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+        <button class="close-btn" onclick="closeModal(event)">&times;</button>
+        <div class="avatar">👨‍🏫</div>
+        <h3>Professor Registration</h3>
+        <form method="POST">
+            <input type="hidden" name="action" value="register">
+            <input type="text" name="name" placeholder="Full Name" required />
+            <input type="text" name="reg_username" placeholder="Username" required />
+            <input type="password" name="reg_password" placeholder="Password" required />
+            <select name="building_id" required>
+                <option value="">Select Building</option>
+                <?php while($building = $buildings->fetch_assoc()): ?>
+                    <option value="<?= $building['id']; ?>"><?= htmlspecialchars($building['building_name']); ?></option>
+                <?php endwhile; ?>
+            </select>
+            <button type="submit">Register</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openModal() {
+        document.getElementById('modalOverlay').style.display = 'flex';
+    }
+    function closeModal(event) {
+        document.getElementById('modalOverlay').style.display = 'none';
+    }
+</script>
+
+</body>
+</html>

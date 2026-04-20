@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Management System</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Ionicons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons.js"></script>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #8e44ad, #3498db);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 90%;
+        }
+
+        .container h1 {
+            font-size: 2.5rem;
+            color: #f39c12;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
+        }
+
+        .navigation {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            color: #2c3e50;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 15px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            transition: background 0.3s, transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:hover {
+            background: #2ecc71;
+            color: #ffffff;
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn ion-icon {
+            font-size: 1.5rem;
+            margin-right: 10px;
+            color: #3498db;
+        }
+
+        .btn:hover ion-icon {
+            color: #ffffff;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 1rem;
+            color: #ecf0f1;
+        }
+
+        .footer a {
+            color: #f39c12;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Data Management System</h1>
+        <p>Manage all your data efficiently and effortlessly.</p>
+
+        <div class="navigation">
+            <a href="manage_courses.php" class="btn">
+                <ion-icon name="book-outline"></ion-icon> Manage Courses
+            </a>
+            <a href="manage_classrooms.php" class="btn">
+                <ion-icon name="school-outline"></ion-icon> Manage Classrooms
+            </a>
+            <a href="professors.php" class="btn">
+                <ion-icon name="person-outline"></ion-icon> Manage Professors
+            </a>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2024 Data Management System.</p>
+            <a href="#">Contact Support</a>
+        </div>
+    </div>
+</body>
+</html>

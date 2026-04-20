@@ -1,0 +1,1198 @@
+<?php
+include('config.php');
+
+// Days and time slots available
+$days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+$time_slots = ['9:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-1:00', '2:00-3:00', '3:00-4:00', '4:00-5:00'];
+
+// Fetch courses
+$courses = $con->query("SELECT * FROM courses");
+
+$professor_schedule = [];
+$group_schedule = [];
+$classroom_schedule = []; // Array to track classroom availability
+
+// Greedy algorithm to allocate time slots
+while ($course = $courses->fetch_assoc()) {
+    $lecture_hours = $course['lecture_hours']; // L part
+    $tutorial_hours = $course['tutorial_hours']; // T part
+    $total_slots = $lecture_hours + $tutorial_hours; // L + T
+
+    $course_id = $course['id'];
+    $professor_id = $course['professor_id'];
+    $semester_id = $course['semester_id'];
+    $students_enrolled = $course['students_enrolled']; // Get the number of students enrolled
+
+    $used_days = []; // Track days already assigned for this course
+
+    for ($i = 0; $i < $total_slots; $i++) {
+        $allocated = false;
+
+        // Try to find an available time slot on different days first
+        foreach ($days as $day) {
+            if (in_array($day, $used_days)) continue;
+
+            $day_allocated = false;
+
+            foreach ($time_slots as $time) {
+                $classrooms = $con->query("SELECT * FROM classrooms"); // Fetch classrooms for each time slot
+
+                while ($classroom = $classrooms->fetch_assoc()) {
+                    $classroom_id = $classroom['id']; // Get the classroom ID
+                    $classroom_capacity = $classroom['capacity']; // Get the classroom capacity
+
+                    // Check if classroom capacity meets the requirement and if classroom, professor, and group are all free at this time and day
+                    if ($classroom_capacity >= $students_enrolled && // Check capacity constraint
+                        !isset($professor_schedule[$professor_id][$day][$time]) &&
+                        !isset($group_schedule[$semester_id][$day][$time]) &&
+                        !isset($classroom_schedule[$classroom_id][$day][$time])) {
+                        
+                        // Allocate classroom
+                        $professor_schedule[$professor_id][$day][$time] = true;
+                        $group_schedule[$semester_id][$day][$time] = true;
+                        $classroom_schedule[$classroom_id][$day][$time] = true; // Mark classroom as used
+
+                        // Save schedule with semester_id
+                        $con->query("INSERT INTO schedule (course_id, classroom_id, day, time_slot, semester_id) 
+                                    VALUES ('$course_id', '$classroom_id', '$day', '$time', '$semester_id')");
+                        $allocated = true;
+                        $day_allocated = true;
+                        $used_days[] = $day; // Mark this day as used for this course
+                        break; // Exit classroom loop
+                    }
+                }
+                if ($day_allocated) break; // Exit time slot loop if allocation is done for this day
+            }
+            if ($day_allocated) break; // Exit day loop if allocation is done for this day
+        }
+
+        // Fallback mechanism if no free slot found
+        if (!$allocated) {
+            foreach ($days as $day) {
+                foreach ($time_slots as $time) {
+                    $classrooms = $con->query("SELECT * FROM classrooms"); // Fetch classrooms again for fallback
+
+                    while ($classroom = $classrooms->fetch_assoc()) {
+                        $classroom_id = $classroom['id'];
+                        $classroom_capacity = $classroom['capacity'];
+
+                        // Check if classroom capacity meets the requirement and if classroom, professor, and group are free
+                        if ($classroom_capacity >= $students_enrolled && // Check capacity constraint
+                            !isset($professor_schedule[$professor_id][$day][$time]) &&
+                            !isset($group_schedule[$semester_id][$day][$time]) &&
+                            !isset($classroom_schedule[$classroom_id][$day][$time])) {
+
+                            // Allocate classroom
+                            $professor_schedule[$professor_id][$day][$time] = true;
+                            $group_schedule[$semester_id][$day][$time] = true;
+                            $classroom_schedule[$classroom_id][$day][$time] = true; // Mark classroom as used
+
+                            // Save schedule with semester_id
+                            $con->query("INSERT INTO schedule (course_id, classroom_id, day, time_slot, semester_id) 
+                                        VALUES ('$course_id', '$classroom_id', '$day', '$time', '$semester_id')");
+                            $allocated = true;
+                            break;
+                        }
+                    }
+                    if ($allocated) break;
+                }
+                if ($allocated) break;
+            }
+        }
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timetable Generation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .message-container {
+            text-align: center;
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .message-container h1 {
+            font-size: 1.5em;
+            color: #333;
+        }
+        .message-container p {
+            font-size: 1em;
+            color: #666;
+            margin: 10px 0 20px;
+        }
+        .message-container a {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        .message-container a:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="message-container">
+        <h1>Timetable Generated Successfully!</h1>
+        <a href="view_timetable.php">View Timetable</a>
+        <a href="index.php" style="margin-left: 10px;">Home</a>
+    </div>
+</body>
+</html>
+
+
+2nd code 
+<?php
+include('config.php');
+
+// Days and time slots
+$days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+$time_slots = ['9:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-1:00', '2:00-3:00', '3:00-4:00', '4:00-5:00'];
+
+// Fetch classrooms once
+$classrooms = [];
+$classroom_query = $con->query("SELECT * FROM classrooms");
+while ($row = $classroom_query->fetch_assoc()) {
+    $classrooms[$row['id']] = $row;
+}
+
+// Fetch courses sorted by building and hours
+$courses_result = $con->query("SELECT * FROM courses ORDER BY building_id, lecture_hours DESC, tutorial_hours DESC");
+
+// Clear old timetable
+// DO NOT clear manual entries
+// Optionally delete only non-manual entries
+$con->query("DELETE FROM schedule WHERE is_manual = 0");
+
+// Load manual entries to block those time slots from auto allocation
+$manual_entries = $con->query("SELECT * FROM schedule WHERE is_manual = 1");
+while ($row = $manual_entries->fetch_assoc()) {
+    $course_id = $row['course_id'];
+    $classroom_id = $row['classroom_id'];
+    $day = $row['day'];
+    $time = $row['time_slot'];
+    $semester_id = $row['semester_id'];
+
+    // Get professor_id for this course
+    $professor_result = $con->query("SELECT professor_id FROM courses WHERE id = '$course_id'");
+    if ($professor_row = $professor_result->fetch_assoc()) {
+        $professor_id = $professor_row['professor_id'];
+
+        // Reserve slot in constraint trackers
+        $professor_schedule[$professor_id][$day][$time] = true;
+        $group_schedule[$semester_id][$day][$time] = true;
+        $classroom_schedule[$classroom_id][$day][$time] = true;
+        $allocated_courses_per_day[$day][$course_id] = true; // optional, avoids allocating the same course again that day
+    }
+}
+
+
+// Group courses by building
+$building_courses = [];
+while ($course = $courses_result->fetch_assoc()) {
+    $building_courses[$course['building_id']][] = $course;
+}
+
+// Scheduling data
+$professor_schedule = [];
+$group_schedule = [];
+$classroom_schedule = [];
+$allocated_courses_per_day = []; // [day][course_id]
+
+// Allocate courses
+foreach ($days as $day) {
+    foreach ($building_courses as $building_id => $courses) {
+        foreach ($courses as $course) {
+            $course_id = $course['id'];
+            $professor_id = $course['professor_id'];
+            $semester_id = $course['semester_id'];
+            $students_enrolled = $course['students_enrolled'];
+            $lecture_hours = $course['lecture_hours'];
+            $tutorial_hours = $course['tutorial_hours'];
+            $requires_projector = $course['requires_projector'];
+            $total_slots = $lecture_hours + $tutorial_hours;
+
+            // If all required slots already allocated, skip
+            $allocated_count = 0;
+            foreach ($days as $d) {
+                if (isset($allocated_courses_per_day[$d][$course_id])) {
+                    $allocated_count++;
+                }
+            }
+            if ($allocated_count >= $total_slots) continue;
+
+            $used_days = []; // Days used for this course so far
+
+            // Allocate all required slots (lecture + tutorial)
+            for ($i = $allocated_count; $i < $total_slots; $i++) {
+                $allocated = false;
+
+                // First try different days
+                foreach ($days as $try_day) {
+                    if (in_array($try_day, $used_days)) continue;
+
+                    $day_allocated = false;
+                    foreach ($time_slots as $time) {
+                        foreach ($classrooms as $classroom_id => $classroom) {
+                            if (
+                                $classroom['building_id'] == $building_id &&
+                                $classroom['capacity'] >= $students_enrolled &&
+                                (!$requires_projector || $classroom['has_projector']) &&
+                                !isset($professor_schedule[$professor_id][$try_day][$time]) &&
+                                !isset($group_schedule[$semester_id][$try_day][$time]) &&
+                                !isset($classroom_schedule[$classroom_id][$try_day][$time])
+                            ) {
+                                // Allocate
+                                $professor_schedule[$professor_id][$try_day][$time] = true;
+                                $group_schedule[$semester_id][$try_day][$time] = true;
+                                $classroom_schedule[$classroom_id][$try_day][$time] = true;
+                                $allocated_courses_per_day[$try_day][$course_id] = true;
+                                $used_days[] = $try_day;
+
+                                $con->query("INSERT INTO schedule (course_id, classroom_id, day, time_slot, semester_id, building_id) 
+                                            VALUES ('$course_id', '$classroom_id', '$try_day', '$time', '$semester_id', '$building_id')");
+                                $allocated = true;
+                                $day_allocated = true;
+                                break 3; // move to next slot
+                            }
+                        }
+                    }
+                }
+
+                // Fallback if distinct day not found
+                if (!$allocated) {
+                    foreach ($days as $try_day) {
+                        foreach ($time_slots as $time) {
+                            foreach ($classrooms as $classroom_id => $classroom) {
+                                if (
+                                    $classroom['building_id'] == $building_id &&
+                                    $classroom['capacity'] >= $students_enrolled &&
+                                    (!$requires_projector || $classroom['has_projector']) &&
+                                    !isset($professor_schedule[$professor_id][$try_day][$time]) &&
+                                    !isset($group_schedule[$semester_id][$try_day][$time]) &&
+                                    !isset($classroom_schedule[$classroom_id][$try_day][$time])
+                                ) {
+                                    // Allocate
+                                    $professor_schedule[$professor_id][$try_day][$time] = true;
+                                    $group_schedule[$semester_id][$try_day][$time] = true;
+                                    $classroom_schedule[$classroom_id][$try_day][$time] = true;
+                                    $allocated_courses_per_day[$try_day][$course_id] = true;
+                                    $used_days[] = $try_day;
+
+                                    $con->query("INSERT INTO schedule (course_id, classroom_id, day, time_slot, semester_id, building_id) 
+                                                VALUES ('$course_id', '$classroom_id', '$try_day', '$time', '$semester_id', '$building_id')");
+                                    break 3; // move to next slot
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+?>
+
+<!-- Success Message UI -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Timetable Generated</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .message-container {
+            text-align: center;
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .message-container h1 {
+            font-size: 1.5em;
+            color: #333;
+        }
+        .message-container a {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .message-container a:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+<div class="message-container">
+    <h1>Timetable Generated Successfully!</h1>
+    <a href="view_timetable.php">View Timetable</a>
+    <a href="index.php" style="margin-left: 10px;">Home</a>
+</div>
+</body>
+</html>
+
+
+AI code 
+
+<?php
+include('config.php');
+
+// Days and time slots
+$days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+$time_slots = ['9:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-1:00', '2:00-3:00', '3:00-4:00', '4:00-5:00'];
+
+// Fetch classrooms once
+$classrooms = [];
+$classroom_query = $con->query("SELECT * FROM classrooms");
+while ($row = $classroom_query->fetch_assoc()) {
+    $classrooms[$row['id']] = $row;
+}
+
+// Fetch courses sorted by building and hours
+$courses_result = $con->query("SELECT * FROM courses ORDER BY building_id, lecture_hours DESC, tutorial_hours DESC");
+
+// Clear old timetable - DO NOT clear manual entries
+$con->query("DELETE FROM schedule WHERE is_manual = 0");
+
+// Load manual entries to block those time slots from auto allocation
+$professor_schedule = [];
+$group_schedule = [];
+$classroom_schedule = [];
+$allocated_courses_per_day = [];
+
+$manual_entries = $con->query("SELECT * FROM schedule WHERE is_manual = 1");
+while ($row = $manual_entries->fetch_assoc()) {
+    $course_id = $row['course_id'];
+    $classroom_id = $row['classroom_id'];
+    $day = $row['day'];
+    $time = $row['time_slot'];
+    $semester_id = $row['semester_id'];
+
+    // Get professor_id for this course
+    $professor_result = $con->query("SELECT professor_id FROM courses WHERE id = '$course_id'");
+    if ($professor_row = $professor_result->fetch_assoc()) {
+        $professor_id = $professor_row['professor_id'];
+
+        // Reserve slot in constraint trackers
+        $professor_schedule[$professor_id][$day][$time] = true;
+        $group_schedule[$semester_id][$day][$time] = true;
+        $classroom_schedule[$classroom_id][$day][$time] = true;
+        $allocated_courses_per_day[$day][$course_id] = true;
+    }
+}
+
+// Group courses by building
+$building_courses = [];
+while ($course = $courses_result->fetch_assoc()) {
+    $building_courses[$course['building_id']][] = $course;
+}
+
+// Allocate courses
+foreach ($days as $day) {
+    foreach ($building_courses as $building_id => $courses) {
+        foreach ($courses as $course) {
+            $course_id = $course['id'];
+            $professor_id = $course['professor_id'];
+            $semester_id = $course['semester_id'];
+            $students_enrolled = $course['students_enrolled'];
+            $lecture_hours = $course['lecture_hours'];
+            $tutorial_hours = $course['tutorial_hours'];
+            $requires_projector = $course['requires_projector'];
+            $total_slots = $lecture_hours + $tutorial_hours;
+
+            // If all required slots already allocated, skip
+            $allocated_count = 0;
+            foreach ($days as $d) {
+                if (isset($allocated_courses_per_day[$d][$course_id])) {
+                    $allocated_count++;
+                }
+            }
+            if ($allocated_count >= $total_slots) continue;
+
+            $used_days = [];
+
+            // Allocate all required slots
+            for ($i = $allocated_count; $i < $total_slots; $i++) {
+                $allocated = false;
+
+                // First try different days
+                foreach ($days as $try_day) {
+                    if (in_array($try_day, $used_days)) continue;
+
+                    foreach ($time_slots as $time) {
+                        foreach ($classrooms as $classroom_id => $classroom) {
+                            if (
+                                $classroom['building_id'] == $building_id &&
+                                $classroom['capacity'] >= $students_enrolled &&
+                                (!$requires_projector || $classroom['has_projector']) &&
+                                !isset($professor_schedule[$professor_id][$try_day][$time]) &&
+                                !isset($group_schedule[$semester_id][$try_day][$time]) &&
+                                !isset($classroom_schedule[$classroom_id][$try_day][$time])
+                            ) {
+                                // Allocate
+                                $professor_schedule[$professor_id][$try_day][$time] = true;
+                                $group_schedule[$semester_id][$try_day][$time] = true;
+                                $classroom_schedule[$classroom_id][$try_day][$time] = true;
+                                $allocated_courses_per_day[$try_day][$course_id] = true;
+                                $used_days[] = $try_day;
+
+                                $con->query("INSERT INTO schedule (course_id, classroom_id, day, time_slot, semester_id, building_id) 
+                                            VALUES ('$course_id', '$classroom_id', '$try_day', '$time', '$semester_id', '$building_id')");
+                                $allocated = true;
+                                break 3;
+                            }
+                        }
+                    }
+                }
+
+                // Fallback if distinct day not found
+                if (!$allocated) {
+                    foreach ($days as $try_day) {
+                        foreach ($time_slots as $time) {
+                            foreach ($classrooms as $classroom_id => $classroom) {
+                                if (
+                                    $classroom['building_id'] == $building_id &&
+                                    $classroom['capacity'] >= $students_enrolled &&
+                                    (!$requires_projector || $classroom['has_projector']) &&
+                                    !isset($professor_schedule[$professor_id][$try_day][$time]) &&
+                                    !isset($group_schedule[$semester_id][$try_day][$time]) &&
+                                    !isset($classroom_schedule[$classroom_id][$try_day][$time])
+                                ) {
+                                    // Allocate
+                                    $professor_schedule[$professor_id][$try_day][$time] = true;
+                                    $group_schedule[$semester_id][$try_day][$time] = true;
+                                    $classroom_schedule[$classroom_id][$try_day][$time] = true;
+                                    $allocated_courses_per_day[$try_day][$course_id] = true;
+                                    $used_days[] = $try_day;
+
+                                    $con->query("INSERT INTO schedule (course_id, classroom_id, day, time_slot, semester_id, building_id) 
+                                                VALUES ('$course_id', '$classroom_id', '$try_day', '$time', '$semester_id', '$building_id')");
+                                    break 3;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+?>
+
+<!-- Success Message UI -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timetable Generated - Academic Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .success-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .success-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #10b981, #059669);
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem auto;
+            color: white;
+            font-size: 2rem;
+            animation: successPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes successPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            50% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); }
+        }
+
+        .success-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 0.75rem;
+        }
+
+        .success-message {
+            font-size: 1rem;
+            color: #4a5568;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.75rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            text-decoration: none;
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            min-width: 140px;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(107, 114, 128, 0.1);
+            color: #374151;
+            border: 2px solid rgba(107, 114, 128, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(107, 114, 128, 0.15);
+            border-color: rgba(107, 114, 128, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .stats-container {
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .stats-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-text {
+            font-size: 0.875rem;
+            color: #1e40af;
+        }
+
+        @media (max-width: 480px) {
+            .success-container {
+                padding: 2rem;
+                margin: 1rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 200px;
+            }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="success-container">
+        <div class="success-icon">
+            <i class="fas fa-check"></i>
+        </div>
+        
+        <h1 class="success-title">Timetable Generated Successfully!</h1>
+        <p class="success-message">
+            Your academic timetable has been automatically generated and optimized for all courses, classrooms, and faculty schedules.
+        </p>
+
+        <div class="stats-container">
+            <div class="stats-title">Generation Complete</div>
+            <div class="stats-text">All scheduling constraints have been satisfied</div>
+        </div>
+
+        <div class="action-buttons">
+            <a href="view_timetable.php" class="btn btn-primary" onclick="showLoading()">
+                <i class="fas fa-calendar-alt"></i>
+                View Timetable
+            </a>
+            <a href="index.php" class="btn btn-secondary">
+                <i class="fas fa-home"></i>
+                Dashboard
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        // Add some entrance animation
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.querySelector('.success-container');
+            container.style.opacity = '0';
+            container.style.transform = 'translateY(30px)';
+            
+            setTimeout(() => {
+                container.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                container.style.opacity = '1';
+                container.style.transform = 'translateY(0)';
+            }, 100);
+        });
+    </script>
+</body>
+</html>
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+<?php
+include('config.php');
+
+// Days and time slots
+$days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+$time_slots = ['9:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-1:00', '2:00-3:00', '3:00-4:00', '4:00-5:00'];
+
+// Fetch classrooms once
+$classrooms = [];
+$classroom_query = $con->query("SELECT * FROM classrooms");
+while ($row = $classroom_query->fetch_assoc()) {
+    $classrooms[$row['id']] = $row;
+}
+
+// Fetch courses sorted by building and hours
+$courses_result = $con->query("SELECT * FROM courses ORDER BY building_id, lecture_hours DESC, tutorial_hours DESC");
+
+// Clear old timetable - DO NOT clear manual entries
+$con->query("DELETE FROM schedule WHERE is_manual = 0");
+
+// Load manual entries to block those time slots from auto allocation
+$professor_schedule = [];
+$classroom_schedule = [];
+$course_allocations = []; // Track how many slots each course has been allocated
+
+$manual_entries = $con->query("SELECT * FROM schedule WHERE is_manual = 1");
+while ($row = $manual_entries->fetch_assoc()) {
+    $course_id = $row['course_id'];
+    $classroom_id = $row['classroom_id'];
+    $day = $row['day'];
+    $time = $row['time_slot'];
+    $semester_id = $row['semester_id'];
+
+    // Get professor_id for this course
+    $professor_result = $con->query("SELECT professor_id FROM courses WHERE id = '$course_id'");
+    if ($professor_row = $professor_result->fetch_assoc()) {
+        $professor_id = $professor_row['professor_id'];
+
+        // Reserve slot in constraint trackers (removed group_schedule constraint)
+        $professor_schedule[$professor_id][$day][$time] = true;
+        $classroom_schedule[$classroom_id][$day][$time] = true;
+        
+        // Count manual allocations for each course
+        if (!isset($course_allocations[$course_id])) {
+            $course_allocations[$course_id] = 0;
+        }
+        $course_allocations[$course_id]++;
+    }
+}
+
+// Group courses by building
+$building_courses = [];
+while ($course = $courses_result->fetch_assoc()) {
+    $building_courses[$course['building_id']][] = $course;
+    
+    // Initialize course allocation counter if not set
+    if (!isset($course_allocations[$course['id']])) {
+        $course_allocations[$course['id']] = 0;
+    }
+}
+
+// Allocate courses - iterate through all time slots and days systematically
+foreach ($days as $day) {
+    foreach ($time_slots as $time) {
+        foreach ($building_courses as $building_id => $courses) {
+            foreach ($courses as $course) {
+                $course_id = $course['id'];
+                $professor_id = $course['professor_id'];
+                $semester_id = $course['semester_id'];
+                $students_enrolled = $course['students_enrolled'];
+                $lecture_hours = $course['lecture_hours'];
+                $tutorial_hours = $course['tutorial_hours'];
+                $requires_projector = $course['requires_projector'];
+                $total_slots_needed = $lecture_hours + $tutorial_hours;
+
+                // Check if course still needs more slots
+                if ($course_allocations[$course_id] >= $total_slots_needed) {
+                    continue; // Course is fully allocated
+                }
+
+                // Check if professor is available at this time (removed group constraint)
+                if (isset($professor_schedule[$professor_id][$day][$time])) {
+                    continue; // Professor not available
+                }
+
+                // Find an available classroom in the same building
+                $allocated = false;
+                foreach ($classrooms as $classroom_id => $classroom) {
+                    if (
+                        $classroom['building_id'] == $building_id &&
+                        $classroom['capacity'] >= $students_enrolled &&
+                        (!$requires_projector || $classroom['has_projector']) &&
+                        !isset($classroom_schedule[$classroom_id][$day][$time])
+                    ) {
+                        // All constraints satisfied - allocate the slot
+                        $professor_schedule[$professor_id][$day][$time] = true;
+                        $classroom_schedule[$classroom_id][$day][$time] = true;
+                        $course_allocations[$course_id]++;
+
+                        // Insert into database
+                        $con->query("INSERT INTO schedule (course_id, classroom_id, day, time_slot, semester_id, building_id) 
+                                    VALUES ('$course_id', '$classroom_id', '$day', '$time', '$semester_id', '$building_id')");
+                        
+                        $allocated = true;
+                        break; // Found a classroom, move to next course
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Optional: Second pass for courses that still need slots (fallback allocation)
+// This helps ensure courses with fewer requirements get allocated even if their preferred slots are taken
+foreach ($building_courses as $building_id => $courses) {
+    foreach ($courses as $course) {
+        $course_id = $course['id'];
+        $professor_id = $course['professor_id'];
+        $semester_id = $course['semester_id'];
+        $students_enrolled = $course['students_enrolled'];
+        $lecture_hours = $course['lecture_hours'];
+        $tutorial_hours = $course['tutorial_hours'];
+        $requires_projector = $course['requires_projector'];
+        $total_slots_needed = $lecture_hours + $tutorial_hours;
+
+        // Check remaining slots needed
+        $remaining_slots = $total_slots_needed - $course_allocations[$course_id];
+        
+        if ($remaining_slots <= 0) continue;
+
+        // Try to allocate remaining slots
+        for ($i = 0; $i < $remaining_slots; $i++) {
+            $allocated = false;
+            
+            foreach ($days as $day) {
+                if ($allocated) break;
+                
+                foreach ($time_slots as $time) {
+                    if ($allocated) break;
+                    
+                    // Check if professor is available (removed group constraint)
+                    if (isset($professor_schedule[$professor_id][$day][$time])) {
+                        continue;
+                    }
+
+                    // Find an available classroom
+                    foreach ($classrooms as $classroom_id => $classroom) {
+                        if (
+                            $classroom['building_id'] == $building_id &&
+                            $classroom['capacity'] >= $students_enrolled &&
+                            (!$requires_projector || $classroom['has_projector']) &&
+                            !isset($classroom_schedule[$classroom_id][$day][$time])
+                        ) {
+                            // Allocate the slot
+                            $professor_schedule[$professor_id][$day][$time] = true;
+                            $classroom_schedule[$classroom_id][$day][$time] = true;
+                            $course_allocations[$course_id]++;
+
+                            // Insert into database
+                            $con->query("INSERT INTO schedule (course_id, classroom_id, day, time_slot, semester_id, building_id) 
+                                        VALUES ('$course_id', '$classroom_id', '$day', '$time', '$semester_id', '$building_id')");
+                            
+                            $allocated = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+?>
+
+<!-- Success Message UI -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timetable Generated - Academic Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .success-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .success-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #10b981, #059669);
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem auto;
+            color: white;
+            font-size: 2rem;
+            animation: successPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes successPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            50% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); }
+        }
+
+        .success-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 0.75rem;
+        }
+
+        .success-message {
+            font-size: 1rem;
+            color: #4a5568;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.75rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            text-decoration: none;
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            min-width: 140px;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(107, 114, 128, 0.1);
+            color: #374151;
+            border: 2px solid rgba(107, 114, 128, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(107, 114, 128, 0.15);
+            border-color: rgba(107, 114, 128, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .stats-container {
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .stats-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-text {
+            font-size: 0.875rem;
+            color: #1e40af;
+        }
+
+        @media (max-width: 480px) {
+            .success-container {
+                padding: 2rem;
+                margin: 1rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 200px;
+            }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="success-container">
+        <div class="success-icon">
+            <i class="fas fa-check"></i>
+        </div>
+        
+        <h1 class="success-title">Timetable Generated Successfully!</h1>
+        <p class="success-message">
+            Your academic timetable has been generated with maximum flexibility - multiple courses from the same or different departments can now run simultaneously, giving students more scheduling options.
+        </p>
+
+        <div class="stats-container">
+            <div class="stats-title">Flexible Scheduling Active</div>
+            <div class="stats-text">Students can now choose from multiple concurrent course options within their semester</div>
+        </div>
+
+        <div class="action-buttons">
+            <a href="view_timetable.php" class="btn btn-primary" onclick="showLoading()">
+                <i class="fas fa-calendar-alt"></i>
+                View Timetable
+            </a>
+            <a href="index.php" class="btn btn-secondary">
+                <i class="fas fa-home"></i>
+                Dashboard
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        // Add some entrance animation
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.querySelector('.success-container');
+            container.style.opacity = '0';
+            container.style.transform = 'translateY(30px)';
+            
+            setTimeout(() => {
+                container.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                container.style.opacity = '1';
+                container.style.transform = 'translateY(0)';
+            }, 100);
+        });
+    </script>
+</body>
+</html>

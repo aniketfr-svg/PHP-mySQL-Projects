@@ -1,0 +1,1747 @@
+<?php include('config.php'); ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Timetable</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            width: 90%;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8em;
+        }
+
+        table thead {
+            background-color: #007BFF;
+            color: white;
+        }
+
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        table tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        a {
+            text-decoration: none;
+            color: #007BFF;
+            font-size: 0.9em;
+            text-align: center;
+            display: block;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            overflow: auto;
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 60%;
+            border-radius: 8px;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            float: right;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .modal-header {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .modal-body {
+            font-size: 1em;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Generated Timetable</h1>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Day</th>
+                    <th>Semester</th>
+                    <th>9:00-10:00</th>
+                    <th>10:00-11:00</th>
+                    <th>11:00-12:00</th>
+                    <th>12:00-1:00</th>
+                    <th>2:00-3:00</th>
+                    <th>3:00-4:00</th>
+                    <th>4:00-5:00</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+                $time_slots = ['9:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-1:00', '2:00-3:00', '3:00-4:00', '4:00-5:00'];
+
+                $semesters_query = "
+                    SELECT DISTINCT semester.id, semester.name 
+                    FROM semester
+                    JOIN courses ON semester.id = courses.semester_id
+                    JOIN schedule ON courses.id = schedule.course_id
+                ";
+                $semesters_result = $con->query($semesters_query);
+                $semesters = [];
+                while ($semester_row = $semesters_result->fetch_assoc()) {
+                    $semesters[] = $semester_row;
+                }
+
+                foreach ($days as $day) {
+                    $first_row = true;
+                    foreach ($semesters as $semester_row) {
+                        $semester_id = $semester_row['id'];
+                        $semester_name = $semester_row['name'];
+
+                        echo $first_row ? "<tr><td rowspan=\"" . count($semesters) . "\">$day</td>" : "<tr>";
+                        $first_row = false;
+
+                        echo "<td>$semester_name</td>";
+
+                        foreach ($time_slots as $time) {
+                            echo "<td>";
+                            
+                            $schedule_query = "
+                                SELECT schedule.*, courses.name AS course_name, classrooms.name AS classroom_name, 
+                                       COALESCE(buildings.building_name, 'N/A') AS building_name, classrooms.has_projector
+                                FROM schedule 
+                                JOIN courses ON schedule.course_id = courses.id 
+                                JOIN classrooms ON schedule.classroom_id = classrooms.id 
+                                LEFT JOIN buildings ON classrooms.building_id = buildings.id
+                                WHERE schedule.day = '$day' AND schedule.time_slot = '$time' 
+                                      AND courses.semester_id = $semester_id
+                            ";
+                            
+                            $result = $con->query($schedule_query);
+
+                            if ($row = $result->fetch_assoc()) {
+                                // Display only course name (no classroom or building)
+                                echo "<a href='#' class='classroom-link' 
+                                         data-course-name='" . $row['course_name'] . "' 
+                                         data-classroom-id='" . $row['classroom_id'] . "'>";
+                                echo $row['course_name'];
+                                echo "</a>";
+                            }
+                            
+                            echo "</td>";
+                        }
+
+                        echo "</tr>";
+                    }
+                }
+                ?>
+            </tbody>
+        </table>
+
+        <a href="index.php" style="display: block; margin-top: 20px;">Back</a>
+    </div>
+
+    <!-- Modal for Classroom Details -->
+    <!-- Modal Structure -->
+<div id="modal" style="display:none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+    <h2>Classroom Details</h2>
+    <p><strong>Name: </strong><span id="modalClassroomName"></span></p>
+    <p><strong>Projector Available: </strong><span id="modalProjector"></span></p>
+    <p><strong>Building: </strong><span id="modalBuildingName"></span></p>
+    <button onclick="document.getElementById('modal').style.display='none'">Close</button>
+</div>
+
+    <script>
+      document.querySelectorAll('.classroom-link').forEach(item => {
+    item.addEventListener('click', function(e) {
+        e.preventDefault();  // Prevent the default link behavior
+
+        var classroomId = this.getAttribute('data-classroom-id');  // Get the classroom ID from the data attribute
+
+        // Fetch classroom details using AJAX
+        fetch('get_classrooms_details.php?id=' + classroomId)
+            .then(response => response.json())  // Parse JSON response
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);  // Show error if classroom is not found
+                } else {
+                    // Set modal content with the fetched data
+                    document.getElementById('modalClassroomName').innerText = data.classroom_name;
+                    document.getElementById('modalProjector').innerText = data.has_projector == 1 ? 'Yes' : 'No';
+                    document.getElementById('modalBuildingName').innerText = data.building_name;
+
+                    // Show the modal
+                    var modal = document.getElementById('modal');  // Assuming your modal has an ID "modal"
+                    modal.style.display = "block";
+                }
+            })
+            .catch(err => {
+                console.error('Error fetching classroom details:', err);  // Log any errors
+            });
+    });
+});
+
+    </script>
+</body>
+</html>
+
+
+old code
+<?php include('config.php'); ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Timetable</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            width: 90%;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8em;
+        }
+
+        table thead {
+            background-color: #007BFF;
+            color: white;
+        }
+
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        table tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        a {
+            text-decoration: none;
+            color: #007BFF;
+            font-size: 0.9em;
+            text-align: center;
+            display: block;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            overflow: auto;
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 60%;
+            border-radius: 8px;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            float: right;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .modal-header {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .modal-body {
+            font-size: 1em;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Generated Timetable</h1>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Day</th>
+                    <th>Semester</th>
+                    <th>9:00-10:00</th>
+                    <th>10:00-11:00</th>
+                    <th>11:00-12:00</th>
+                    <th>12:00-1:00</th>
+                    <th>2:00-3:00</th>
+                    <th>3:00-4:00</th>
+                    <th>4:00-5:00</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+                $time_slots = ['9:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-1:00', '2:00-3:00', '3:00-4:00', '4:00-5:00'];
+
+                $semesters_query = "
+                    SELECT DISTINCT semester.id, semester.name 
+                    FROM semester
+                    JOIN courses ON semester.id = courses.semester_id
+                    JOIN schedule ON courses.id = schedule.course_id
+                ";
+                $semesters_result = $con->query($semesters_query);
+                $semesters = [];
+                while ($semester_row = $semesters_result->fetch_assoc()) {
+                    $semesters[] = $semester_row;
+                }
+
+                foreach ($days as $day) {
+                    $first_row = true;
+                    foreach ($semesters as $semester_row) {
+                        $semester_id = $semester_row['id'];
+                        $semester_name = $semester_row['name'];
+
+                        echo $first_row ? "<tr><td rowspan=\"" . count($semesters) . "\">$day</td>" : "<tr>";
+                        $first_row = false;
+
+                        echo "<td>$semester_name</td>";
+
+                        foreach ($time_slots as $time) {
+                            echo "<td>";
+                            
+                            $schedule_query = "
+                                SELECT schedule.*, courses.name AS course_name, classrooms.name AS classroom_name, 
+                                       COALESCE(buildings.building_name, 'N/A') AS building_name, classrooms.has_projector
+                                FROM schedule 
+                                JOIN courses ON schedule.course_id = courses.id 
+                                JOIN classrooms ON schedule.classroom_id = classrooms.id 
+                                LEFT JOIN buildings ON classrooms.building_id = buildings.id
+                                WHERE schedule.day = '$day' AND schedule.time_slot = '$time' 
+                                      AND courses.semester_id = $semester_id
+                            ";
+                            
+                            $result = $con->query($schedule_query);
+
+                            if ($row = $result->fetch_assoc()) {
+                                // Display only course name (no classroom or building)
+                                echo "<a href='#' class='classroom-link' 
+                                         data-course-name='" . $row['course_name'] . "' 
+                                         data-classroom-id='" . $row['classroom_id'] . "'>";
+                                echo $row['course_name'];
+                                echo "</a>";
+                            }
+                            
+                            echo "</td>";
+                        }
+
+                        echo "</tr>";
+                    }
+                }
+                ?>
+            </tbody>
+        </table>
+
+        <a href="index.php" style="display: block; margin-top: 20px;">Back</a>
+    </div>
+
+    <!-- Modal for Classroom Details -->
+    <!-- Modal Structure -->
+<div id="modal" style="display:none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+    <h2>Classroom Details</h2>
+    <p><strong>Name: </strong><span id="modalClassroomName"></span></p>
+    <p><strong>Projector Available: </strong><span id="modalProjector"></span></p>
+    <p><strong>Building: </strong><span id="modalBuildingName"></span></p>
+    <button onclick="document.getElementById('modal').style.display='none'">Close</button>
+</div>
+
+    <script>
+      document.querySelectorAll('.classroom-link').forEach(item => {
+    item.addEventListener('click', function(e) {
+        e.preventDefault();  // Prevent the default link behavior
+
+        var classroomId = this.getAttribute('data-classroom-id');  // Get the classroom ID from the data attribute
+
+        // Fetch classroom details using AJAX
+        fetch('get_classrooms_details.php?id=' + classroomId)
+            .then(response => response.json())  // Parse JSON response
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);  // Show error if classroom is not found
+                } else {
+                    // Set modal content with the fetched data
+                    document.getElementById('modalClassroomName').innerText = data.classroom_name;
+                    document.getElementById('modalProjector').innerText = data.has_projector == 1 ? 'Yes' : 'No';
+                    document.getElementById('modalBuildingName').innerText = data.building_name;
+
+                    // Show the modal
+                    var modal = document.getElementById('modal');  // Assuming your modal has an ID "modal"
+                    modal.style.display = "block";
+                }
+            })
+            .catch(err => {
+                console.error('Error fetching classroom details:', err);  // Log any errors
+            });
+    });
+});
+
+    </script>
+</body>
+</html>
+
+claude AI////////////////////////////////////////
+<?php include('config.php'); ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Timetable - Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f8fafc;
+            color: #1a202c;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%);
+            color: white;
+            padding: 2rem 0;
+            box-shadow: 0 4px 20px rgba(30, 64, 175, 0.15);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-title h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .header-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-light {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-light:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .controls-section {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+        }
+
+        .controls-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .controls-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .filter-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .filter-select {
+            padding: 0.5rem 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            background: white;
+            min-width: 120px;
+            transition: all 0.2s ease;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .timetable-container {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+        }
+
+        .timetable-header {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .timetable-header h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1a202c;
+            margin: 0;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        table thead {
+            background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        table th {
+            padding: 1rem 0.75rem;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        table th:first-child,
+        table th:nth-child(2) {
+            background: linear-gradient(135deg, #1e3a8a 0%, #312e81 100%);
+            position: sticky;
+            left: 0;
+            z-index: 11;
+        }
+
+        table th:nth-child(2) {
+            left: 80px;
+        }
+
+        table td {
+            padding: 0.5rem;
+            text-align: center;
+            border: 1px solid #e5e7eb;
+            vertical-align: top;
+            position: relative;
+            min-width: 150px;
+            min-height: 80px;
+        }
+
+        table tbody tr:nth-child(odd) {
+            background: #fafbfc;
+        }
+
+        table tbody tr:hover {
+            background: #f1f5f9;
+        }
+
+        table td:first-child,
+        table td:nth-child(2) {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #374151;
+            border-right: 2px solid #d1d5db;
+            position: sticky;
+            left: 0;
+            z-index: 5;
+            vertical-align: middle;
+        }
+
+        table td:nth-child(2) {
+            left: 80px;
+        }
+
+        .courses-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            max-height: 140px;
+            overflow-y: auto;
+            padding: 0.25rem;
+            position: relative;
+        }
+
+        .course-card {
+            display: block;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 0.5rem 0.6rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.75rem;
+            line-height: 1.3;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+            position: relative;
+            overflow: hidden;
+            text-align: left;
+            margin-bottom: 0.25rem;
+            border: 2px solid transparent;
+        }
+
+        .course-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .course-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .course-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .course-card:hover::before {
+            opacity: 1;
+        }
+
+        /* Different colors for multiple courses */
+        .course-card.color-1 {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        }
+
+        .course-card.color-2 {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+        }
+
+        .course-card.color-3 {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+        }
+
+        .course-card.color-4 {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+        }
+
+        .course-card.color-5 {
+            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+            box-shadow: 0 2px 8px rgba(236, 72, 153, 0.3);
+        }
+
+        .course-card.color-6 {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
+        }
+
+        .course-info {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+            font-size: 0.8rem;
+        }
+
+        .course-details {
+            display: block;
+            font-size: 0.65rem;
+            opacity: 0.9;
+            font-weight: 400;
+            line-height: 1.2;
+        }
+
+        .course-meta {
+            display: block;
+            font-size: 0.6rem;
+            opacity: 0.8;
+            margin-top: 0.1rem;
+        }
+
+        .course-count-badge {
+            position: absolute;
+            top: 0.25rem;
+            right: 0.25rem;
+            background: rgba(255, 255, 255, 0.95);
+            color: #1a202c;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 0.15rem 0.4rem;
+            border-radius: 12px;
+            line-height: 1;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        .overlap-indicator {
+            position: absolute;
+            top: 0.25rem;
+            left: 0.25rem;
+            background: #ef4444;
+            color: white;
+            font-size: 0.6rem;
+            font-weight: 600;
+            padding: 0.1rem 0.3rem;
+            border-radius: 8px;
+            line-height: 1;
+        }
+
+        .empty-slot {
+            color: #9ca3af;
+            font-size: 0.75rem;
+            font-style: italic;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 60px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 3% auto;
+            padding: 0;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 700px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+            animation: slideIn 0.3s ease;
+            overflow: hidden;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%);
+            color: white;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: background 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .course-details-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .course-detail-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.25rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .course-detail-card:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+        }
+
+        .course-detail-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .course-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #1a202c;
+        }
+
+        .course-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 0.3rem 0.6rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 500;
+            color: #374151;
+            font-size: 0.875rem;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: #1a202c;
+            font-size: 0.875rem;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-available {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-overcapacity {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .stats-bar {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 1px solid #bae6fd;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0369a1;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #0369a1;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 500;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .controls-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-controls {
+                justify-content: center;
+            }
+
+            table th:first-child,
+            table td:first-child {
+                min-width: 70px;
+            }
+
+            table th:nth-child(2),
+            table td:nth-child(2) {
+                left: 70px;
+                min-width: 100px;
+            }
+
+            .course-card {
+                font-size: 0.7rem;
+                padding: 0.4rem 0.5rem;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 2% auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="header-title">
+                <div class="header-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div>
+                    <h1>Academic Timetable</h1>
+                    <p style="margin: 0; opacity: 0.9; font-size: 0.9rem;">Comprehensive Course Schedule Management</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a href="generate_timetable.php" class="btn btn-light">
+                    <i class="fas fa-sync-alt"></i>
+                    Regenerate
+                </a>
+                <a href="index.php" class="btn btn-light">
+                    <i class="fas fa-home"></i>
+                    Dashboard
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="controls-section">
+            <div class="controls-header">
+                <h3 class="controls-title">
+                    <i class="fas fa-filter" style="margin-right: 0.5rem; color: #3b82f6;"></i>
+                    Timetable Filters
+                </h3>
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <label class="filter-label">Semester</label>
+                        <select class="filter-select" id="semesterFilter">
+                            <option value="">All Semesters</option>
+                            <?php
+                            $semesters_query = "SELECT DISTINCT semester.id, semester.name FROM semester JOIN courses ON semester.id = courses.semester_id JOIN schedule ON courses.id = schedule.course_id ORDER BY semester.name";
+                            $semesters_result = $con->query($semesters_query);
+                            while ($semester_row = $semesters_result->fetch_assoc()) {
+                                echo "<option value='{$semester_row['id']}'>{$semester_row['name']}</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Building</label>
+                        <select class="filter-select" id="buildingFilter">
+                            <option value="">All Buildings</option>
+                            <?php
+                            $buildings_query = "SELECT DISTINCT buildings.id, buildings.building_name FROM buildings JOIN classrooms ON buildings.id = classrooms.building_id JOIN schedule ON classrooms.id = schedule.classroom_id ORDER BY buildings.building_name";
+                            $buildings_result = $con->query($buildings_query);
+                            while ($building_row = $buildings_result->fetch_assoc()) {
+                                echo "<option value='{$building_row['id']}'>{$building_row['building_name']}</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <button class="btn" style="background: #3b82f6; color: white;" onclick="applyFilters()">
+                        <i class="fas fa-search"></i>
+                        Apply Filters
+                    </button>
+                </div>
+            </div>
+
+            <?php
+            $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            $time_slots = ['9:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-1:00', '2:00-3:00', '3:00-4:00', '4:00-5:00'];
+            
+            // Get comprehensive statistics
+            $total_classes = $con->query("SELECT COUNT(*) as count FROM schedule")->fetch_assoc()['count'];
+            $total_courses = $con->query("SELECT COUNT(DISTINCT course_id) as count FROM schedule")->fetch_assoc()['count'];
+            $total_classrooms = $con->query("SELECT COUNT(DISTINCT classroom_id) as count FROM schedule")->fetch_assoc()['count'];
+            
+            // Calculate overlapping courses with better logic
+            $overlap_query = "
+                SELECT day, time_slot, COUNT(*) as overlap_count
+                FROM schedule 
+                GROUP BY day, time_slot 
+                HAVING COUNT(*) > 1
+            ";
+            $overlap_result = $con->query($overlap_query);
+            $overlapping_slots = 0;
+            $total_overlaps = 0;
+            while ($row = $overlap_result->fetch_assoc()) {
+                $overlapping_slots++;
+                $total_overlaps += $row['overlap_count'] - 1; // Count extra courses beyond the first
+            }
+            ?>
+
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <span class="stat-number"><?php echo $total_classes; ?></span>
+                    <span class="stat-label">Total Classes</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number"><?php echo $total_courses; ?></span>
+                    <span class="stat-label">Active Courses</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number"><?php echo $total_classrooms; ?></span>
+                    <span class="stat-label">Classrooms Used</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number"><?php echo $overlapping_slots; ?></span>
+                    <span class="stat-label">Overlapping Slots</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number"><?php echo $total_overlaps; ?></span>
+                    <span class="stat-label">Conflicts</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="timetable-container">
+            <div class="timetable-header">
+                <h2>
+                    <i class="fas fa-table" style="margin-right: 0.5rem; color: #3b82f6;"></i>
+                    Weekly Academic Schedule - Multiple Course View
+                </h2>
+            </div>
+
+            <div class="table-wrapper">
+                <table id="timetableTable">
+                    <thead>
+                        <tr>
+                            <th style="min-width: 80px;">Day</th>
+                            <th style="min-width: 120px;">Semester</th>
+                            <th>9:00-10:00</th>
+                            <th>10:00-11:00</th>
+                            <th>11:00-12:00</th>
+                            <th>12:00-1:00</th>
+                            <th>2:00-3:00</th>
+                            <th>3:00-4:00</th>
+                            <th>4:00-5:00</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        // Get all semesters that have scheduled courses
+                        $semesters_query = "
+                            SELECT DISTINCT semester.id, semester.name 
+                            FROM semester
+                            JOIN courses ON semester.id = courses.semester_id
+                            JOIN schedule ON courses.id = schedule.course_id
+                            ORDER BY semester.name
+                        ";
+                        $semesters_result = $con->query($semesters_query);
+                        $semesters = [];
+                        while ($semester_row = $semesters_result->fetch_assoc()) {
+                            $semesters[] = $semester_row;
+                        }
+
+                        foreach ($days as $day) {
+                            $first_row = true;
+                            foreach ($semesters as $semester_row) {
+                                $semester_id = $semester_row['id'];
+                                $semester_name = $semester_row['name'];
+
+                                echo $first_row ? "<tr><td rowspan=\"" . count($semesters) . "\" style='vertical-align: middle; font-weight: 600;'>$day</td>" : "<tr>";
+                                $first_row = false;
+
+                                echo "<td style='font-weight: 600; color: #374151;'>$semester_name</td>";
+
+                                foreach ($time_slots as $time) {
+                                    echo "<td>";
+                                    
+                                    // Get all courses for this specific time slot, day, and semester
+                                    $schedule_query = "
+                                        SELECT 
+                                            schedule.id as schedule_id,
+                                            schedule.day,
+                                            schedule.time_slot,
+                                            courses.id as course_id,
+                                            courses.name AS course_name, 
+                                            
+                                            courses.students_enrolled,
+                                            classrooms.id as classroom_id,
+                                            classrooms.name AS classroom_name, 
+                                            classrooms.capacity,
+                                            classrooms.has_projector,
+                                            COALESCE(buildings.building_name, 'N/A') AS building_name,
+                                            CONCAT(professors.name, ' ') AS professor_name
+                                        FROM schedule 
+                                        JOIN courses ON schedule.course_id = courses.id 
+                                        JOIN classrooms ON schedule.classroom_id = classrooms.id 
+                                        LEFT JOIN buildings ON classrooms.building_id = buildings.id
+                                        LEFT JOIN professors ON courses.professor_id = professors.id
+                                        WHERE schedule.day = ? AND schedule.time_slot = ? AND courses.semester_id = ?
+                                        ORDER BY courses.name
+                                    ";
+                                    
+                                    $stmt = $con->prepare($schedule_query);
+                                    $stmt->bind_param("ssi", $day, $time, $semester_id);
+                                    $stmt->execute();
+                                    $result = $stmt->get_result();
+                                    
+                                    $courses = [];
+                                    while ($row = $result->fetch_assoc()) {
+                                        $courses[] = $row;
+                                    }
+
+                                    if (count($courses) > 0) {
+                                        echo "<div class='courses-container'>";
+                                        
+                                        // Show count badge if multiple courses
+                                        if (count($courses) > 1) {
+                                            echo "<div class='course-count-badge'>" . count($courses) . "</div>";
+                                        }
+                                        
+                                        // Display each course with different colors for multiple courses
+                                        foreach ($courses as $index => $course) {
+                                            $colorClass = '';
+                                            if (count($courses) > 1) {
+                                                $colorClass = 'color-' . (($index % 6) + 1);
+                                            }
+                                            
+                                            // Check for capacity issues
+                                            $isOvercapacity = $course['students_enrolled'] > $course['capacity'];
+                                            
+                                            echo "<a href='#' class='course-card $colorClass' onclick='showCourseDetails(" . json_encode($course) . ")'>";
+                                            
+                                            // Show overlap indicator for multiple courses
+                                            if (count($courses) > 1 && $index === 0) {
+                                                echo "<div class='overlap-indicator'>OVERLAP</div>";
+                                            }
+                                            
+                                            // Only show course name in the table view
+                                            echo "<span class='course-info'>{$course['course_name']}</span>";
+                                            
+                                            echo "</a>";
+                                        }
+                                        
+                                        echo "</div>";
+                                    } else {
+                                        echo "<div class='empty-slot'>No classes scheduled</div>";
+                                    }
+                                    
+                                    echo "</td>";
+                                }
+                                echo "</tr>";
+                            }
+                        }
+                        ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Details Modal -->
+    <div id="courseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Course Details</h3>
+                <button class="modal-close" onclick="closeCourseModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Course details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Course details modal functionality
+        function showCourseDetails(course) {
+            const modal = document.getElementById('courseModal');
+            const modalBody = document.getElementById('modalBody');
+            
+            const isOvercapacity = course.students_enrolled > course.capacity;
+            const utilizationPercentage = ((course.students_enrolled / course.capacity) * 100).toFixed(1);
+            
+            modalBody.innerHTML = `
+                <div class="course-details-list">
+                    <div class="course-detail-card">
+                        <div class="course-detail-header">
+                            <div class="course-title">${course.course_name}</div>
+                            <div class="course-badge">${course.course_code}</div>
+                        </div>
+                        
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">Schedule</span>
+                                <span class="detail-value">${course.day} ${course.time_slot}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Professor</span>
+                                <span class="detail-value">${course.professor_name}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Classroom</span>
+                                <span class="detail-value">${course.classroom_name}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Building</span>
+                                <span class="detail-value">${course.building_name}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Capacity</span>
+                                <span class="detail-value">${course.capacity} students</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Enrolled</span>
+                                <span class="detail-value">${course.students_enrolled} students</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Utilization</span>
+                                <span class="detail-value">${utilizationPercentage}%</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Status</span>
+                                <span class="detail-value">
+                                    <span class="status-badge ${isOvercapacity ? 'status-overcapacity' : 'status-available'}">
+                                        <i class="fas ${isOvercapacity ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i>
+                                        ${isOvercapacity ? 'Over Capacity' : 'Available'}
+                                    </span>
+                                </span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Projector</span>
+                                <span class="detail-value">
+                                    <i class="fas ${course.has_projector == 1 ? 'fa-check text-green-500' : 'fa-times text-red-500'}"></i>
+                                    ${course.has_projector == 1 ? 'Available' : 'Not Available'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+        }
+
+        function closeCourseModal() {
+            document.getElementById('courseModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('courseModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Filter functionality
+        function applyFilters() {
+            const semesterFilter = document.getElementById('semesterFilter').value;
+            const buildingFilter = document.getElementById('buildingFilter').value;
+            
+            // Create URL parameters
+            const params = new URLSearchParams();
+            if (semesterFilter) params.append('semester', semesterFilter);
+            if (buildingFilter) params.append('building', buildingFilter);
+            
+            // Reload page with filters
+            const url = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+            window.location.href = url;
+        }
+
+        // Apply filters from URL parameters on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.has('semester')) {
+                document.getElementById('semesterFilter').value = urlParams.get('semester');
+            }
+            
+            if (urlParams.has('building')) {
+                document.getElementById('buildingFilter').value = urlParams.get('building');
+            }
+        });
+
+        // Enhanced keyboard navigation
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeCourseModal();
+            }
+        });
+
+        // Add search functionality for courses
+        function searchCourses(searchTerm) {
+            const courseCards = document.querySelectorAll('.course-card');
+            const searchLower = searchTerm.toLowerCase();
+            
+            courseCards.forEach(card => {
+                const courseText = card.textContent.toLowerCase();
+                const shouldShow = courseText.includes(searchLower);
+                
+                if (shouldShow) {
+                    card.style.display = 'block';
+                    card.parentElement.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Hide empty containers
+            document.querySelectorAll('.courses-container').forEach(container => {
+                const visibleCards = container.querySelectorAll('.course-card[style*="display: block"], .course-card:not([style*="display: none"])');
+                if (visibleCards.length === 0 && !container.querySelector('.empty-slot')) {
+                    container.style.display = 'none';
+                } else {
+                    container.style.display = 'flex';
+                }
+            });
+        }
+
+        // Highlight conflicts and overlaps
+        function highlightConflicts() {
+            const conflictSlots = document.querySelectorAll('.course-count-badge');
+            conflictSlots.forEach(badge => {
+                const container = badge.parentElement;
+                container.style.border = '2px solid #ef4444';
+                container.style.borderRadius = '8px';
+            });
+        }
+
+        // Initialize conflict highlighting on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            highlightConflicts();
+        });
+
+        // Add tooltip functionality for better UX
+        function initializeTooltips() {
+            const courseCards = document.querySelectorAll('.course-card');
+            
+            courseCards.forEach(card => {
+                card.setAttribute('title', 'Click for detailed information');
+            });
+        }
+
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTooltips();
+        });
+    </script>
+
+<?php
+// Handle filtered queries if URL parameters are present
+if (isset($_GET['semester']) || isset($_GET['building'])) {
+    $whereConditions = [];
+    $params = [];
+    $types = '';
+    
+    if (isset($_GET['semester']) && !empty($_GET['semester'])) {
+        $whereConditions[] = "courses.semester_id = ?";
+        $params[] = $_GET['semester'];
+        $types .= 'i';
+    }
+    
+    if (isset($_GET['building']) && !empty($_GET['building'])) {
+        $whereConditions[] = "buildings.id = ?";
+        $params[] = $_GET['building'];
+        $types .= 'i';
+    }
+    
+    if (!empty($whereConditions)) {
+        $whereClause = " AND " . implode(" AND ", $whereConditions);
+        
+        // Note: The filtered query would need to be integrated into the main timetable display logic above
+        // This is a placeholder for the filtering functionality
+    }
+}
+?>
+<style>
+        /* Further refinements for compact display */
+        .course-card {
+            min-height: 16px;
+            max-height: 20px;
+            font-size: 0.6rem;
+            padding: 2px 4px;
+            line-height: 1.1;
+            border-radius: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            position: relative;
+            margin-bottom: 1px;
+        }
+
+        .course-card:hover {
+            transform: scale(1.05);
+            z-index: 20;
+            max-height: none;
+            white-space: normal;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .course-info {
+            font-weight: 600;
+            font-size: 0.6rem;
+            letter-spacing: 0.02em;
+        }
+
+        .course-count-badge {
+            font-size: 0.5rem;
+            padding: 1px 3px;
+            min-width: 14px;
+            height: 12px;
+            line-height: 10px;
+            top: 0px;
+            right: 0px;
+            border-radius: 6px;
+        }
+
+        .overlap-indicator {
+            font-size: 0.45rem;
+            padding: 1px 2px;
+            top: 0px;
+            left: 0px;
+            border-radius: 3px;
+            line-height: 8px;
+            height: 10px;
+            min-width: 10px;
+            text-align: center;
+        }
+
+        .courses-container {
+            gap: 1px;
+            padding: 1px;
+            max-height: 66px;
+            overflow: hidden;
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .course-card {
+                font-size: 0.55rem;
+                min-height: 14px;
+                max-height: 18px;
+                padding: 1px 3px;
+            }
+
+            .course-count-badge {
+                font-size: 0.45rem;
+                padding: 0px 2px;
+                min-width: 12px;
+                height: 10px;
+                line-height: 8px;
+            }
+
+            .overlap-indicator {
+                font-size: 0.4rem;
+                padding: 0px 1px;
+                height: 8px;
+                min-width: 8px;
+                line-height: 6px;
+            }
+
+            table td {
+                height: 55px;
+                min-width: 110px;
+            }
+
+            .courses-container {
+                max-height: 51px;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            .header-actions,
+            .controls-section,
+            .modal {
+                display: none !important;
+            }
+
+            .course-card {
+                background: #f0f0f0 !important;
+                color: #000 !important;
+                border: 1px solid #ccc !important;
+                box-shadow: none !important;
+            }
+
+            table {
+                font-size: 0.7rem;
+            }
+
+            .course-card {
+                font-size: 0.5rem;
+            }
+        }
+
+        /* Accessibility improvements */
+        .course-card:focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: 1px;
+        }
+
+        .course-card[tabindex="0"] {
+            cursor: pointer;
+        }
+
+        /* Loading states */
+        .loading-skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+    </style>
+</body>
+</html>

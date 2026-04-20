@@ -1,0 +1,232 @@
+2025-05-29 00:28:41 - === Import process started ===
+2025-05-29 00:28:41 - POST 'import' parameter is set
+2025-05-29 00:28:41 - File upload detected
+2025-05-29 00:28:41 - File upload error code: 0
+2025-05-29 00:28:41 - File upload successful
+2025-05-29 00:28:41 - Import type: 'courses'
+2025-05-29 00:28:41 - Original filename: 'course_data.csv'
+2025-05-29 00:28:41 - Temp filename: 'C:\xampp\tmp\phpE18F.tmp'
+2025-05-29 00:28:41 - File size: 499 bytes
+2025-05-29 00:28:41 - File extension: 'csv'
+2025-05-29 00:28:41 - File validation passed
+2025-05-29 00:28:41 - File opened successfully
+2025-05-29 00:28:41 - CSV Header: name | credits | lecture_hours | tutorial_hours | practical_hours | professor_name | semester_name | building_name | students_enrolled | requires_projector | course_type
+2025-05-29 00:28:41 - Expected headers for 'courses': name | credits | lecture_hours | tutorial_hours | practical_hours | professor_name | semester_name | building_name | students_enrolled | requires_projector | course_type
+2025-05-29 00:28:41 - Header validation passed
+2025-05-29 00:28:41 - Processing row 2: AI Basics | 4 | 3 | 1 | 2 | Dr. Smith | Semester 3 | Block A | 45 | 1 | Core
+2025-05-29 00:28:41 - Row 2 - Resolving IDs for professor='Dr. Smith', semester='Semester 3', building='Block A'
+2025-05-29 00:28:41 - Row 2 - IDs resolved: professor_id=, semester_id=, building_id=
+2025-05-29 00:28:41 - SKIP: Row 2: missing professor 'Dr. Smith', semester 'Semester 3', building 'Block A'
+2025-05-29 00:28:41 - Processing row 3: Database Systems | 3 | 2 | 1 | 2 | Dr. Williams | Semester 2 | Block B | 50 | 0 | Elective
+2025-05-29 00:28:41 - Row 3 - Resolving IDs for professor='Dr. Williams', semester='Semester 2', building='Block B'
+2025-05-29 00:28:41 - Row 3 - IDs resolved: professor_id=, semester_id=, building_id=
+2025-05-29 00:28:41 - SKIP: Row 3: missing professor 'Dr. Williams', semester 'Semester 2', building 'Block B'
+2025-05-29 00:28:41 - Processing row 4: Web Development | 4 | 2 | 2 | 3 | Dr. Johnson | Semester 4 | Block C | 40 | 1 | Core
+2025-05-29 00:28:41 - Row 4 - Resolving IDs for professor='Dr. Johnson', semester='Semester 4', building='Block C'
+2025-05-29 00:28:41 - Row 4 - IDs resolved: professor_id=, semester_id=, building_id=
+2025-05-29 00:28:41 - SKIP: Row 4: missing professor 'Dr. Johnson', semester 'Semester 4', building 'Block C'
+2025-05-29 00:28:41 - Processing row 5: Data Structures | 3 | 3 | 1 | 1 | Prof. Brown | Semester 2 | Engineering Building | 60 | 0 | Core
+2025-05-29 00:28:41 - Row 5 - Resolving IDs for professor='Prof. Brown', semester='Semester 2', building='Engineering Building'
+2025-05-29 00:28:41 - Row 5 - IDs resolved: professor_id=, semester_id=, building_id=
+2025-05-29 00:28:41 - SKIP: Row 5: missing professor 'Prof. Brown', semester 'Semester 2', building 'Engineering Building'
+2025-05-29 00:28:41 - Processing row 6: Computer Networks | 4 | 3 | 0 | 2 | Dr. Davis | Semester 5 | Science Building | 35 | 1 | Elective
+2025-05-29 00:28:41 - Row 6 - Resolving IDs for professor='Dr. Davis', semester='Semester 5', building='Science Building'
+2025-05-29 00:28:41 - Row 6 - IDs resolved: professor_id=, semester_id=, building_id=
+2025-05-29 00:28:41 - SKIP: Row 6: missing professor 'Dr. Davis', semester 'Semester 5', building 'Science Building'
+2025-05-29 00:28:41 - Import completed. Success: 0, Errors: 5
+2025-05-29 00:28:41 - Import failed completely
+2025-05-29 00:28:51 - === Import process started ===
+2025-05-29 00:28:51 - POST 'import' parameter is set
+2025-05-29 00:28:51 - File upload detected
+2025-05-29 00:28:51 - File upload error code: 0
+2025-05-29 00:28:51 - File upload successful
+2025-05-29 00:28:51 - Import type: 'classrooms'
+2025-05-29 00:28:51 - Original filename: 'course_data.csv'
+2025-05-29 00:28:51 - Temp filename: 'C:\xampp\tmp\php93C.tmp'
+2025-05-29 00:28:51 - File size: 499 bytes
+2025-05-29 00:28:51 - File extension: 'csv'
+2025-05-29 00:28:51 - File validation passed
+2025-05-29 00:28:51 - File opened successfully
+2025-05-29 00:28:51 - CSV Header: name | credits | lecture_hours | tutorial_hours | practical_hours | professor_name | semester_name | building_name | students_enrolled | requires_projector | course_type
+2025-05-29 00:28:51 - ERROR: Unknown import type: classrooms
+2025-05-29 00:29:01 - === Import process started ===
+2025-05-29 00:29:01 - POST 'import' parameter is set
+2025-05-29 00:29:01 - File upload detected
+2025-05-29 00:29:01 - File upload error code: 0
+2025-05-29 00:29:01 - File upload successful
+2025-05-29 00:29:01 - Import type: 'professors'
+2025-05-29 00:29:01 - Original filename: 'course_data.csv'
+2025-05-29 00:29:01 - Temp filename: 'C:\xampp\tmp\php2E88.tmp'
+2025-05-29 00:29:01 - File size: 499 bytes
+2025-05-29 00:29:01 - File extension: 'csv'
+2025-05-29 00:29:01 - File validation passed
+2025-05-29 00:29:01 - File opened successfully
+2025-05-29 00:29:01 - CSV Header: name | credits | lecture_hours | tutorial_hours | practical_hours | professor_name | semester_name | building_name | students_enrolled | requires_projector | course_type
+2025-05-29 00:29:01 - Expected headers for 'professors': name | building_name | username | password
+2025-05-29 00:29:01 - Header validation passed
+2025-05-29 00:29:01 - Processing professor row 2: AI Basics | 4 | 3 | 1 | 2 | Dr. Smith | Semester 3 | Block A | 45 | 1 | Core
+2025-05-29 00:29:01 - Professor row 2 - Resolving building ID for building='4'
+2025-05-29 00:29:01 - SKIP: Row 2: building '4' not found
+2025-05-29 00:29:01 - Processing professor row 3: Database Systems | 3 | 2 | 1 | 2 | Dr. Williams | Semester 2 | Block B | 50 | 0 | Elective
+2025-05-29 00:29:01 - Professor row 3 - Resolving building ID for building='3'
+2025-05-29 00:29:01 - SKIP: Row 3: building '3' not found
+2025-05-29 00:29:01 - Processing professor row 4: Web Development | 4 | 2 | 2 | 3 | Dr. Johnson | Semester 4 | Block C | 40 | 1 | Core
+2025-05-29 00:29:01 - Professor row 4 - Resolving building ID for building='4'
+2025-05-29 00:29:01 - SKIP: Row 4: building '4' not found
+2025-05-29 00:29:01 - Processing professor row 5: Data Structures | 3 | 3 | 1 | 1 | Prof. Brown | Semester 2 | Engineering Building | 60 | 0 | Core
+2025-05-29 00:29:01 - Professor row 5 - Resolving building ID for building='3'
+2025-05-29 00:29:01 - SKIP: Row 5: building '3' not found
+2025-05-29 00:29:01 - Processing professor row 6: Computer Networks | 4 | 3 | 0 | 2 | Dr. Davis | Semester 5 | Science Building | 35 | 1 | Elective
+2025-05-29 00:29:01 - Professor row 6 - Resolving building ID for building='4'
+2025-05-29 00:29:01 - SKIP: Row 6: building '4' not found
+2025-05-29 00:29:01 - Import completed. Success: 0, Errors: 5
+2025-05-29 00:29:01 - Import failed completely
+2025-05-29 00:29:34 - === Import process started ===
+2025-05-29 00:29:34 - POST 'import' parameter is set
+2025-05-29 00:29:34 - File upload detected
+2025-05-29 00:29:34 - File upload error code: 0
+2025-05-29 00:29:34 - File upload successful
+2025-05-29 00:29:34 - Import type: 'courses'
+2025-05-29 00:29:34 - Original filename: 'course_data.csv'
+2025-05-29 00:29:34 - Temp filename: 'C:\xampp\tmp\phpB0D8.tmp'
+2025-05-29 00:29:34 - File size: 499 bytes
+2025-05-29 00:29:34 - File extension: 'csv'
+2025-05-29 00:29:34 - File validation passed
+2025-05-29 00:29:34 - File opened successfully
+2025-05-29 00:29:34 - CSV Header: name | credits | lecture_hours | tutorial_hours | practical_hours | professor_name | semester_name | building_name | students_enrolled | requires_projector | course_type
+2025-05-29 00:29:34 - Expected headers for 'courses': name | credits | lecture_hours | tutorial_hours | practical_hours | professor_name | semester_name | building_name | students_enrolled | requires_projector | course_type
+2025-05-29 00:29:34 - Header validation passed
+2025-05-29 00:29:34 - Processing row 2: AI Basics | 4 | 3 | 1 | 2 | Dr. Smith | Semester 3 | Block A | 45 | 1 | Core
+2025-05-29 00:29:34 - Row 2 - Resolving IDs for professor='Dr. Smith', semester='Semester 3', building='Block A'
+2025-05-29 00:29:34 - Row 2 - IDs resolved: professor_id=, semester_id=, building_id=
+2025-05-29 00:29:34 - SKIP: Row 2: missing professor 'Dr. Smith', semester 'Semester 3', building 'Block A'
+2025-05-29 00:29:34 - Processing row 3: Database Systems | 3 | 2 | 1 | 2 | Dr. Williams | Semester 2 | Block B | 50 | 0 | Elective
+2025-05-29 00:29:34 - Row 3 - Resolving IDs for professor='Dr. Williams', semester='Semester 2', building='Block B'
+2025-05-29 00:29:34 - Row 3 - IDs resolved: professor_id=, semester_id=, building_id=
+2025-05-29 00:29:34 - SKIP: Row 3: missing professor 'Dr. Williams', semester 'Semester 2', building 'Block B'
+2025-05-29 00:29:34 - Processing row 4: Web Development | 4 | 2 | 2 | 3 | Dr. Johnson | Semester 4 | Block C | 40 | 1 | Core
+2025-05-29 00:29:34 - Row 4 - Resolving IDs for professor='Dr. Johnson', semester='Semester 4', building='Block C'
+2025-05-29 00:29:34 - Row 4 - IDs resolved: professor_id=, semester_id=, building_id=
+2025-05-29 00:29:34 - SKIP: Row 4: missing professor 'Dr. Johnson', semester 'Semester 4', building 'Block C'
+2025-05-29 00:29:34 - Processing row 5: Data Structures | 3 | 3 | 1 | 1 | Prof. Brown | Semester 2 | Engineering Building | 60 | 0 | Core
+2025-05-29 00:29:34 - Row 5 - Resolving IDs for professor='Prof. Brown', semester='Semester 2', building='Engineering Building'
+2025-05-29 00:29:34 - Row 5 - IDs resolved: professor_id=, semester_id=, building_id=
+2025-05-29 00:29:34 - SKIP: Row 5: missing professor 'Prof. Brown', semester 'Semester 2', building 'Engineering Building'
+2025-05-29 00:29:34 - Processing row 6: Computer Networks | 4 | 3 | 0 | 2 | Dr. Davis | Semester 5 | Science Building | 35 | 1 | Elective
+2025-05-29 00:29:34 - Row 6 - Resolving IDs for professor='Dr. Davis', semester='Semester 5', building='Science Building'
+2025-05-29 00:29:34 - Row 6 - IDs resolved: professor_id=, semester_id=, building_id=
+2025-05-29 00:29:34 - SKIP: Row 6: missing professor 'Dr. Davis', semester 'Semester 5', building 'Science Building'
+2025-05-29 00:29:34 - Import completed. Success: 0, Errors: 5
+2025-05-29 00:29:34 - Import failed completely
+2025-05-29 00:48:19
+=== IMPORT DEBUG START ===
+Request Method: POST
+POST data: Array
+(
+    [type] => courses
+    [import] => 
+)
+
+FILES data: Array
+(
+    [importFile] => Array
+        (
+            [name] => course_data.csv
+            [full_path] => course_data.csv
+            [type] => text/csv
+            [tmp_name] => C:\xampp\tmp\phpDC1D.tmp
+            [error] => 0
+            [size] => 499
+        )
+
+)
+
+Import type: courses
+File name: course_data.csv
+File size: 499 bytes
+File type: text/csv
+File tmp_name: C:\xampp\tmp\phpDC1D.tmp
+File error: 0
+File extension: csv
+Basic validation passed
+File opened successfully
+CSV Header: name | credits | lecture_hours | tutorial_hours | practical_hours | professor_name | semester_name | building_name | students_enrolled | requires_projector | course_type
+Header count: 11
+Processing courses...
+Row 1: AI Basics | 4 | 3 | 1 | 2 | Dr. Smith | Semester 3 | Block A | 45 | 1 | Core
+Row 1 IDs - Prof: , Sem: , Bldg: 
+Row 1 SKIPPED - Missing IDs
+Row 2: Database Systems | 3 | 2 | 1 | 2 | Dr. Williams | Semester 2 | Block B | 50 | 0 | Elective
+Row 2 IDs - Prof: , Sem: , Bldg: 
+Row 2 SKIPPED - Missing IDs
+Row 3: Web Development | 4 | 2 | 2 | 3 | Dr. Johnson | Semester 4 | Block C | 40 | 1 | Core
+Row 3 IDs - Prof: , Sem: , Bldg: 
+Row 3 SKIPPED - Missing IDs
+Row 4: Data Structures | 3 | 3 | 1 | 1 | Prof. Brown | Semester 2 | Engineering Building | 60 | 0 | Core
+Row 4 IDs - Prof: , Sem: , Bldg: 
+Row 4 SKIPPED - Missing IDs
+Row 5: Computer Networks | 4 | 3 | 0 | 2 | Dr. Davis | Semester 5 | Science Building | 35 | 1 | Elective
+Row 5 IDs - Prof: , Sem: , Bldg: 
+Row 5 SKIPPED - Missing IDs
+=== FINAL RESULTS ===
+Rows processed: 5
+Success: 0
+Errors: 5
+==================================================
+
+2025-05-29 00:49:09
+=== IMPORT DEBUG START ===
+Request Method: POST
+POST data: Array
+(
+    [type] => courses
+    [import] => 
+)
+
+FILES data: Array
+(
+    [importFile] => Array
+        (
+            [name] => course_data.csv
+            [full_path] => course_data.csv
+            [type] => text/csv
+            [tmp_name] => C:\xampp\tmp\php9F4E.tmp
+            [error] => 0
+            [size] => 499
+        )
+
+)
+
+Import type: courses
+File name: course_data.csv
+File size: 499 bytes
+File type: text/csv
+File tmp_name: C:\xampp\tmp\php9F4E.tmp
+File error: 0
+File extension: csv
+Basic validation passed
+File opened successfully
+CSV Header: name | credits | lecture_hours | tutorial_hours | practical_hours | professor_name | semester_name | building_name | students_enrolled | requires_projector | course_type
+Header count: 11
+Processing courses...
+Row 1: AI Basics | 4 | 3 | 1 | 2 | Dr. Smith | Semester 3 | Block A | 45 | 1 | Core
+Row 1 IDs - Prof: , Sem: , Bldg: 
+Row 1 SKIPPED - Missing IDs
+Row 2: Database Systems | 3 | 2 | 1 | 2 | Dr. Williams | Semester 2 | Block B | 50 | 0 | Elective
+Row 2 IDs - Prof: , Sem: , Bldg: 
+Row 2 SKIPPED - Missing IDs
+Row 3: Web Development | 4 | 2 | 2 | 3 | Dr. Johnson | Semester 4 | Block C | 40 | 1 | Core
+Row 3 IDs - Prof: , Sem: , Bldg: 
+Row 3 SKIPPED - Missing IDs
+Row 4: Data Structures | 3 | 3 | 1 | 1 | Prof. Brown | Semester 2 | Engineering Building | 60 | 0 | Core
+Row 4 IDs - Prof: , Sem: , Bldg: 
+Row 4 SKIPPED - Missing IDs
+Row 5: Computer Networks | 4 | 3 | 0 | 2 | Dr. Davis | Semester 5 | Science Building | 35 | 1 | Elective
+Row 5 IDs - Prof: , Sem: , Bldg: 
+Row 5 SKIPPED - Missing IDs
+=== FINAL RESULTS ===
+Rows processed: 5
+Success: 0
+Errors: 5
+==================================================
+
